@@ -20,14 +20,14 @@ defmodule RouterTest do
         |> Brahman.Dns.Router.upstream_from()
 
       assert upstreams == {
-        [
-          {{1, 1, 1, 1}, 53},
-          {{8, 8, 8, 8}, 53},
-          {{4, 2, 2, 1}, 53},
-          {{8, 8, 4, 4}, 53}
-        ],
-        "google.com"
-      }
+               [
+                 {{1, 1, 1, 1}, 53},
+                 {{8, 8, 8, 8}, 53},
+                 {{4, 2, 2, 1}, 53},
+                 {{8, 8, 4, 4}, 53}
+               ],
+               "google.com"
+             }
     end
   end
 end

@@ -20,7 +20,7 @@ defmodule Brahman.Config do
     |> filter_servers([])
   end
 
-  @spec forward_zones() :: %{[String.t()] => [{:inet.ip4_address(), non_neg_integer()}]}
+  @spec forward_zones() :: %{String.t() => [{:inet.ip4_address(), non_neg_integer()}]}
   def forward_zones, do: get_env(:forward_zones, Map.new())
 
   # private functions

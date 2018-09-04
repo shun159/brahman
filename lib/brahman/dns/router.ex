@@ -57,11 +57,19 @@ defmodule Brahman.Dns.Router do
   end
 
   @spec custom_upstream_filter(
-          {[String.t()], [upstream()]},
+          {String.t(), [upstream()]},
           [upstream()],
           [String.t()]
         ) :: [upstream()]
   defp custom_upstream_filter({label, upstreams}, acc, query_labels) do
-    if List.starts_with?(label, query_labels), do: upstreams, else: acc
+    prefix =
+      label
+      |> :dns.dname_to_lower()
+      |> :dns.dname_to_labels()
+      |> Enum.reverse()
+
+    query_labels
+    |> List.starts_with?(prefix)
+    |> if(do: upstreams, else: acc)
   end
 end

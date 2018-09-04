@@ -4,8 +4,7 @@ use Mix.Config
 
 config :brahman,
   forward_zones: %{
-    # captive.cap => [localhost:8053]
-    ["cap", "captive"] => [{{127, 0, 0, 1}, 8053}]
+    "captive.cap" => [{{127, 0, 0, 1}, 8053}]
   }
 
 config :erldns,
