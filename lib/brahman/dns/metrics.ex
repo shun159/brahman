@@ -31,6 +31,7 @@ defmodule Brahman.Dns.Metrics do
     case get_metric_value("brahman.histograms.dns.#{inspect(server)}.latency") do
       {:error, _} ->
         {:ok, 0}
+
       {:ok, metrics} ->
         Keyword.fetch(metrics, :median)
     end
@@ -41,7 +42,8 @@ defmodule Brahman.Dns.Metrics do
     case get_metric_value("brahman.counters.dns.ignored") do
       {:error, _} ->
         {:ok, 0}
-      {:ok, metrics} ->
+
+      {:xok, metrics} ->
         Keyword.fetch(metrics, :value)
     end
   end
@@ -51,6 +53,7 @@ defmodule Brahman.Dns.Metrics do
     case get_metric_value("brahman.counters.dns.#{inspect(server)}.successes") do
       {:error, _} ->
         {:ok, 0}
+
       {:ok, metrics} ->
         Keyword.fetch(metrics, :value)
     end
@@ -61,6 +64,7 @@ defmodule Brahman.Dns.Metrics do
     case get_metric_value("brahman.spirals.dns.#{inspect(server)}.failed") do
       {:error, _} ->
         {:ok, 0}
+
       {:ok, metrics} ->
         Keyword.fetch(metrics, :one)
     end
