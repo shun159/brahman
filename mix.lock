@@ -1,4 +1,5 @@
 %{
+  "aleppo": {:git, "https://github.com/ChicagoBoss/aleppo.git", "e5af421b8c75d86dd88aefae91402478250bb82c", [tag: "v0.9"]},
   "base32": {:git, "https://github.com/dnsimple/base32_erlang.git", "40431a7480176b24863e18b92d9872e54c714df5", [ref: "master"]},
   "bear": {:git, "git://github.com/boundary/bear.git", "119234548783af19b8ec75c879c5062676b92571", [tag: "0.8.2"]},
   "bunt": {:hex, :bunt, "0.2.0", "951c6e801e8b1d2cbe58ebbd3e616a869061ddadcc4863d0a2182541acae9a38", [:mix], [], "hexpm"},
@@ -28,6 +29,7 @@
   "poison": {:hex, :poison, "4.0.1", "bcb755a16fac91cad79bfe9fc3585bb07b9331e50cfe3420a24bcc2d735709ae", [:mix], [], "hexpm"},
   "poolboy": {:git, "git://github.com/devinus/poolboy.git", "0fe289ba36375a58f391c2f2740a86807fcde12b", []},
   "proper": {:git, "https://github.com/manopapad/proper.git", "cc01b149e3777dbcf97eecaaa081f6867e01a56f", []},
+  "quaff": {:git, "https://github.com/qhool/quaff.git", "0bb123a560ab2a69ec4fed206cb1983b6527963a", []},
   "recon": {:git, "git://github.com/ferd/recon.git", "3578fa86ad408d98e0512ded0b2f2c5b834a84ad", [tag: "2.2.1"]},
   "setup": {:hex, :setup, "1.8.4", "738db0685dc1741f45c6a9bf78478e0d5877f3d0876c0b50fd02f0210edb5aa4", [:rebar3], [], "hexpm"},
 }

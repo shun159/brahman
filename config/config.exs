@@ -2,6 +2,12 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+config :brahman,
+  forward_zones: %{
+    # captive.cap => [localhost:8053]
+    ["cap", "captive"] => [{{127, 0, 0, 1}, 8053}]
+  }
+
 config :erldns,
   servers: [
     [
@@ -35,7 +41,7 @@ config :sasl,
   error_logger_mf_maxfiles: 5
 
 config :logger,
-  level: :info,
+  level: :debug,
   format: "$date $time [$level] $metadata$message",
   metadata: [:application],
   handle_otp_reports: true

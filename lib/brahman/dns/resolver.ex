@@ -8,16 +8,24 @@ defmodule Brahman.Dns.Resolver do
   require Logger
 
   defmodule State do
+    @moduledoc false
+
     defstruct [:upstream, :data, :parent, :mon_ref, :socket]
 
     @type t :: %State{
-            upstream: {:inet.ip4_address(), :inet.port_number()},
-            data: map(),
-            parent: pid(),
-            mon_ref: reference(),
+            upstream: {:inet.ip4_address(), :inet.port_number()} | nil,
+            data: map() | nil,
+            parent: pid() | nil,
+            mon_ref: reference() | nil,
             socket: :gen_udp.socket() | nil
           }
   end
+
+  @udp_sock_opt [
+    {:reuseaddr, true},
+    {:active, :once},
+    :binary
+  ]
 
   @typep upstream() :: {:inet.ip4_address(), :inet.port_number()}
 
@@ -38,8 +46,7 @@ defmodule Brahman.Dns.Resolver do
 
   # GenServer callback functions
 
-  def init([{ip, port} = upstream, data, parent]) do
-    :ok = Logger.debug("Start resolve to DNS upstream: #{:inet.ntoa(ip)}:#{port}")
+  def init([upstream, data, parent]) do
     _ = Process.flag(:trap_exit, true)
     state = %State{upstream: upstream, data: data, parent: parent}
     {:ok, state, {:continue, :init}}
@@ -49,9 +56,9 @@ defmodule Brahman.Dns.Resolver do
           {:noreply, State.t()} | {:stop, :normal, State.t()}
   def handle_continue(:init, state0) do
     case try_send_packet(state0) do
-      {:error, _reason} ->
-        :ok = notify_result(:down, state0)
-        {:stop, :normal, state0}
+      {:error, state} ->
+        :ok = notify_result(:down, state)
+        {:stop, :normal, state}
 
       {:ok, state1} ->
         state = init_kill_trigger(state1)
@@ -73,7 +80,6 @@ defmodule Brahman.Dns.Resolver do
   @spec handle_info({:DOWN, :gen_udp.socket(), any(), any(), term()}, State.t()) ::
           {:stop, :normal, State.t()}
   def handle_info({:DOWN, mon_ref, _, _pid, reason}, %{mon_ref: mon_ref} = state) do
-    :ok = Logger.debug("Parent Died: #{inspect(reason)}")
     {:stop, reason, state}
   end
 
@@ -83,7 +89,6 @@ defmodule Brahman.Dns.Resolver do
         {:udp, socket, ip, port, reply},
         %State{upstream: {ip, port}, socket: socket} = state
       ) do
-    :ok = Logger.debug("Received reply from DNS upstream: #{:inet.ntoa(ip)}:#{port}")
     :ok = notify_result({:reply, reply}, state)
     {:stop, :normal, state}
   end
@@ -96,7 +101,7 @@ defmodule Brahman.Dns.Resolver do
           {:shutdown, State.t()}
   def terminate(_reason, %State{socket: socket, upstream: {ip, port}} = state) do
     :ok = Logger.debug("Closing socket for: #{:inet.ntoa(ip)}:#{port}")
-    :ok = :gen_udp.close(socket)
+    :ok = if socket, do: :gen_udp.close(socket), else: :ok
     {:shutdown, state}
   end
 
@@ -117,27 +122,28 @@ defmodule Brahman.Dns.Resolver do
 
   @spec open_socket(State.t()) :: {:ok, State.t()} | {:error, term()}
   defp open_socket(state) do
-    case :gen_udp.open(0, udp_sock_opts(state)) do
+    case :gen_udp.open(0, @udp_sock_opt) do
       {:error, reason} ->
         :ok = Logger.debug("Failed to open socket: reason = #{inspect(reason)}")
-        {:error, reason}
+        {:error, state}
 
       {:ok, socket} ->
         {:ok, %{state | socket: socket}}
     end
   end
 
-  @spec send_packet({:ok, State.t()} | {:error, term()}) :: {:ok, State.t()} | {:error, term()}
+  @spec send_packet({:ok, State.t()} | {:error, State.t()}) ::
+          {:ok, State.t()} | {:error, State.t()}
   defp send_packet({:error, _reason} = error), do: error
 
-  defp send_packet({:ok, %State{data: data, socket: socket} = state}) do
-    case :gen_udp.send(socket, data.dns_packet) do
-      :ok ->
-        {:ok, %{state | socket: socket}}
-
+  defp send_packet({:ok, %State{data: data, socket: socket, upstream: {ipaddr, port}} = state}) do
+    case :gen_udp.send(socket, ipaddr, port, data.dns_packet) do
       {:error, reason} ->
         :ok = Logger.debug("Failed to send packet: reason = #{inspect(reason)}")
-        {:error, reason}
+        {:error, %{state | socket: socket}}
+
+      :ok ->
+        {:ok, %{state | socket: socket}}
     end
   end
 
@@ -165,17 +171,7 @@ defmodule Brahman.Dns.Resolver do
   @spec schedule_timeout() :: reference()
   defp schedule_timeout, do: Process.send_after(self(), :timeout, 5000)
 
-  @spec udp_sock_opts(%State{upstream: upstream()}) :: [tuple() | :binary]
-  defp udp_sock_opts(%State{upstream: {ipaddr, port}}) do
-    [
-      {:ip, ipaddr},
-      {:port, port},
-      {:reuseaddr, true},
-      {:active, :once},
-      :binary
-    ]
-  end
-
+  @spec notify_result(:down | :timeout | {:reply, binary()}, State.t()) :: :ok
   defp notify_result(:down, state),
     do: Process.send(state.parent, {:upstream_down, {state.upstream, self()}}, [])
 
