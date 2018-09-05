@@ -1,5 +1,5 @@
 defmodule RouterTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   use Brahman.Dns.Header
 
   setup_all do
@@ -12,22 +12,15 @@ defmodule RouterTest do
 
   describe "Router.upstream_from/1" do
     test "with dns_query() record" do
-      upstreams =
+      {upstreams, name} =
         "test/packet_data/dns_query.raw"
         |> File.read!()
         |> :dns.decode_message()
         |> dns_message(:questions)
         |> Brahman.Dns.Router.upstream_from()
 
-      assert upstreams == {
-               [
-                 {{1, 1, 1, 1}, 53},
-                 {{8, 8, 8, 8}, 53},
-                 {{4, 2, 2, 1}, 53},
-                 {{8, 8, 4, 4}, 53}
-               ],
-               "google.com"
-             }
+      assert name == "google.com"
+      assert length(upstreams) == 2
     end
   end
 end

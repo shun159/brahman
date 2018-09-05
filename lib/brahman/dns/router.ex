@@ -16,6 +16,7 @@ defmodule Brahman.Dns.Router do
       name
       |> parse_name_to_reversed_labels()
       |> find_upstream(name)
+      |> filter_by_failcount()
 
     {upstreams, name}
   end
@@ -30,6 +31,27 @@ defmodule Brahman.Dns.Router do
   end
 
   # private functions
+
+  @spec filter_by_failcount([upstream()]) :: [upstream()]
+  defp filter_by_failcount(upstreams) do
+    upstreams
+    |> Enum.group_by(&Metrics.get_failed/1)
+    |> Enum.unzip()
+    |> Kernel.elem(1)
+    |> take_upstream_1()
+    |> take_upstream_2()
+  end
+
+  @spec take_upstream_1([[upstream()]]) :: [upstream()]
+  defp take_upstream_1([upstreams]), do: upstreams
+
+  defp take_upstream_1([upstreams | _]) when length(upstreams) > 2, do: upstreams
+
+  defp take_upstream_1([upstreams1, upstreams2 | _]), do: upstreams1 ++ upstreams2
+
+  @spec take_upstream_2([upstream()]) :: [upstream()]
+  defp take_upstream_2(upstreams) when length(upstreams) > 2,
+    do: Enum.take_random(upstreams, 2)
 
   @spec parse_name_to_reversed_labels(String.t()) :: [String.t()]
   defp parse_name_to_reversed_labels(name) do
