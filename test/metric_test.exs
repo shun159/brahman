@@ -53,4 +53,19 @@ defmodule MetricTest do
       assert value in 0..1
     end
   end
+
+  describe "Brahman.Dns.Metrics.get_selected/1" do
+    test "with before selected/1" do
+      server = {{8, 8, 8, 8}, 53}
+      value = Brahman.Dns.Metrics.get_selected(server)
+      assert value == 0
+    end
+
+    test "with after selected/1" do
+      server = {{8, 8, 8, 8}, 53}
+      :ok = Brahman.Dns.Metrics.selected(server)
+      value = Brahman.Dns.Metrics.get_selected(server)
+      assert value in 0..1
+    end
+  end
 end

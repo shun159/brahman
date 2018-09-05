@@ -15,7 +15,7 @@ defmodule Brahman.Dns.Metrics do
   def ignored(num_of_query),
     do: update_counter("dns.ignored", num_of_query)
 
-  @spec ignored({:inet.ip4_address(), :inet.port_number()}) :: :ok
+  @spec success({:inet.ip4_address(), :inet.port_number()}) :: :ok
   def success(server),
     do: update_counter("dns.#{inspect(server)}.successes", 1)
 
@@ -25,6 +25,10 @@ defmodule Brahman.Dns.Metrics do
 
   @spec no_upstreams() :: :ok
   def no_upstreams, do: update_spiral("dns.no_upstreams", 1)
+
+  @spec selected({:inet.ip4_address(), :inet.port_number()}) :: :ok
+  def selected(server),
+    do: update_counter("dns.#{inspect(server)}.selected", 1)
 
   @spec get_latency({:inet.ip4_address(), :inet.port_number()}) :: non_neg_integer()
   def get_latency(server) do
@@ -67,6 +71,17 @@ defmodule Brahman.Dns.Metrics do
 
       {:ok, metrics} ->
         metrics[:one]
+    end
+  end
+
+  @spec get_selected({:inet.ip4_address(), :inet.port_number()}) :: non_neg_integer()
+  def get_selected(server) do
+    case get_metric_value("brahman.counters.dns.#{inspect(server)}.selected") do
+      {:error, _} ->
+        0
+
+      {:ok, metrics} ->
+        metrics[:value]
     end
   end
 end
