@@ -5,7 +5,16 @@ defmodule Brahman.Supervisor do
 
   use Supervisor
 
-  @children []
+  @dns_forwarder_sup_spec %{
+    id: Brahman.Dns,
+    start: {Brahman.Dns, :start_link, []},
+    restart: :permanent,
+    shutdown: :infinity,
+    type: :supervisor,
+    modules: [Brahman.Dns]
+  }
+
+  @children [@dns_forwarder_sup_spec]
 
   def start_link do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)

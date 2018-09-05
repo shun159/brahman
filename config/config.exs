@@ -19,7 +19,7 @@ config :erldns,
   ],
   dnssec: [enabled: false],
   use_root_hints: false,
-  zone: 'priv/zones.json',
+  zones: 'priv/zones.json',
   pools: []
 
 config :exometer_core,
