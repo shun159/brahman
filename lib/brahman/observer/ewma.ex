@@ -1,36 +1,17 @@
 defmodule Brahman.Observer.EWMA do
-  @moduledoc false
+  @moduledoc """
+  Balancer/Observer based on P2C EWMA algorithm
+  """
 
   use GenServer
+  use Brahman.Logging
 
   require Record
   require Logger
 
-  Record.defrecord(
-    :ewma,
-    cost: 0,
-    stamp: :erlang.monotonic_time(:nano_seconds),
-    penalty: 1.0e307,
-    pending: 0,
-    decay: 10.0e9
-  )
-
-  Record.defrecord(
-    :tracking,
-    total_successes: 0,
-    total_failures: 0,
-    consecutive_failures: 0,
-    failure_thres: 5,
-    failure_backoff: 10_000,
-    last_failure_time: 0
-  )
-
-  Record.defrecord(
-    :upstream,
-    ip_port: nil,
-    tracking: nil,
-    ewma: nil
-  )
+  for {name, fields} <- Record.extract_all(from: "include/brahman.hrl") do
+    Record.defrecord(name, fields)
+  end
 
   @table_name :observer
 
@@ -38,13 +19,36 @@ defmodule Brahman.Observer.EWMA do
 
   # API functions
 
-  def observe(measurement, ip_port, success) do
-    GenServer.cast(__MODULE__, {:observe, {measurement, ip_port, success}})
-  end
+  @spec observe(float(), ip_port(), boolean()) :: :ok
+  def observe(measurement, ip_port, success),
+    do: GenServer.cast(__MODULE__, {:observe, {measurement, ip_port, success}})
 
-  def start_link do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
-  end
+  @spec set_pending(ip_port()) :: :ok
+  def set_pending(ip_port),
+    do: GenServer.cast(__MODULE__, {:set_pending, ip_port})
+
+  @doc """
+  Uses the power of two choices algorithm as described in:
+  Michael Mitzenmacher. 2001. The Power of Two Choices in Randomized
+  Load Balancing. IEEE Trans. Parallel Distrib. Syst. 12,
+  10 (October 2001), 1094-1104.
+  """
+  @spec pick_upstream([ip_port()]) :: {:ok, record(:upstream)} | {:error, term()}
+  def pick_upstream(upstreams = [_ | _]),
+    do: GenServer.call(__MODULE__, {:pick_upstream, upstreams}, 1000)
+
+  def pick_upstream(_upstream),
+    do: {:error, :no_upstream_available}
+
+  @spec get_ewma(ip_port()) :: record(:upstream)
+  def get_ewma(upstream), do: do_get_ewma(upstream)
+
+  @doc """
+  Starts the server
+  """
+  @spec start_link() :: GenServer.on_start()
+  def start_link,
+    do: GenServer.start_link(__MODULE__, [], name: __MODULE__)
 
   # GenServer callback functions
 
@@ -55,8 +59,17 @@ defmodule Brahman.Observer.EWMA do
 
   def handle_continue(:init, state) do
     _ = make_seed()
-    :observer = create_table()
+    _ = create_table()
     {:noreply, state}
+  end
+
+  def handle_continue(_continuation, state) do
+    {:noreply, state}
+  end
+
+  def handle_call({:pick_upstream, upstreams}, _from, state) do
+    result = do_pick_upstream(upstreams)
+    {:reply, result, state}
   end
 
   def handle_call(_request, _from, state) do
@@ -65,12 +78,6 @@ defmodule Brahman.Observer.EWMA do
 
   def handle_cast({:observe, {measurement, ip_port, success}}, state) do
     :ok = logging(:debug, {:observing_success, success, measurement})
-
-    ip_port
-    |> get_ewma()
-    |> calculate_ewma(measurement)
-    |> decrement_pending()
-
     {:noreply, state}
   end
 
@@ -78,73 +85,117 @@ defmodule Brahman.Observer.EWMA do
     {:noreply, state}
   end
 
+  def handle_info(_info, state) do
+    {:noreply, state}
+  end
+
   # Private functions
 
-  # NOTE: for this functions
-  #
-  # Records a new value in the exponentially weighted moving average.
-  # This type of algorithm shows up all over the place in load balancer code,
-  # and here we're porting Twitter's P2CBalancerPeakEwma which factors time into our moving average.
-  # This is nice because we can bias decisions more with recent information,
-  # allowing us to not have to assume a constant request rate to a particular service.
-  #
+  @spec do_pick_upstream([ip_port]) :: record(:upstream)
+  defp do_pick_upstream(upstreams) do
+    upstreams
+    |> split_by_criteria()
+    |> pick_upstreams()
+    |> select_based_on_cost()
+  end
+
+  @spec split_by_criteria([record(:upstream)]) :: {[record(:upstream)], [record(:upstream)]}
+  defp split_by_criteria(upstreams) do
+    upstreams
+    |> Enum.map(&do_get_ewma/1)
+    |> Enum.split_with(&in_failure_threshold?(upstream(&1, :tracking)))
+  end
+
+  @spec pick_upstreams({[record(:upstream)], [record(:upstream)]}) :: [
+          record(:upstream)
+        ]
+  defp pick_upstreams({[], down}), do: down
+
+  defp pick_upstreams({up, _down}), do: up
+
+  @spec select_based_on_cost([record(:upstream)]) :: {:ok, record(:upstream)}
+  defp select_based_on_cost([choice]), do: {:ok, choice}
+
+  defp select_based_on_cost(choices) do
+    choice =
+      choices
+      |> Enum.take_random(2)
+      |> Enum.min_by(&calculate_cost/1)
+
+    {:ok, choice}
+  end
+
   # Calculate the exponential weighted moving average of our
   # round trip time. It isn't exactly an ewma, but rather a
   # "peak-ewma", since `cost` is hyper-sensitive to latency peaks.
   # Note, because the frequency of observations represents an
   # unevenly spaced time-series[1], we consider the time between
   # observations when calculating our weight.
-  # [1] http://www.eckner.com/papers/ts_alg.pdf
   #
-  defp calculate_ewma(upstream(ewma: ewma), val) do
+  @spec calculate_ewma(float(), record(:ewma)) :: record(:ewma)
+  defp calculate_ewma(val, ewma = ewma(cost: cost, stamp: stamp, decay: decay)) do
     now = :erlang.monotonic_time(:nano_seconds)
-    new_cost = calculate_ewma_1(val, ewma, now)
-    ewma(ewma, cost: new_cost, stamp: now)
+
+    weight =
+      now
+      |> Kernel.-(stamp)
+      |> Kernel.max(0)
+      |> Kernel.-()
+      |> Kernel./(decay)
+      |> :math.exp()
+
+    new_cost = if val > cost, do: val, else: cost * weight + val * (1.0 - weight)
+
+    ewma(ewma, stamp: now, cost: new_cost)
   end
 
-  defp calculate_ewma_1(ewma(cost: cost, stamp: stamp, decay: decay), val, now) do
-    now
-    |> Kernel.-(stamp)
-    |> Kernel.max(0)
-    |> Kernel.-()
-    |> Kernel./(decay)
-    |> :math.exp()
-    |> calculate_ewma_2(val, cost)
-  end
+  # Returns the cost of this according to the EWMA algorithm.
+  @spec calculate_cost(record(:upstream)) :: float()
+  defp calculate_cost(upstream(ewma: ewma)) do
+    ewma(cost: cost, pending: pending, penalty: penalty) = calculate_ewma(0.0, ewma)
 
-  defp calculate_ewma_2(_weight, val, cost) when val > cost, do: val
+    case {:erlang.float(cost), :erlang.float(penalty)} do
+      {0.0, 0.0} ->
+        1
 
-  defp calculate_ewma_2(weight, val, cost), do: (cost * weight) + (val * (1.0 - weight))
+      {0.0, _} ->
+        penalty
 
-  defp decrement_pending(ewma = ewma(pending: pending)) when pending > 0 do
-    ewma(ewma, pending: pending - 1)
-  end
-
-  defp decrement_pending(ewma) do
-    :ok = logging(:warn, :pending_connection_is_zero)
-    ewma
-  end
-
-  @spec get_ewma(ip_port()) :: record(:upstream)
-  defp get_ewma(ip_port) do
-    case :ets.lookup(@table_name, ip_port) do
-      [] ->
-        upstream(ip_port: ip_port, tracking: tracking(), ewma: ewma())
-
-      [upstream() = entry] ->
-        entry
+      _ ->
+        cost * (pending + 1)
     end
   end
 
-  @spec logging(Logger.level(), term()) :: :ok
-  defp logging(level, key), do: Logger.log(level, log_descr(key))
+  @spec do_get_ewma(ip_port()) :: record(:upstream)
+  defp do_get_ewma(upstream) do
+    case :ets.lookup(@table_name, upstream) do
+      [] -> upstream(ip_port: upstream)
+      [entry] -> entry
+    end
+  end
 
-  @spec log_descr(tuple() | atom()) :: function()
-  defp log_descr({:observing_success, success, measurement}),
-    do: fn -> "Observing connection success: #{success} with time of #{measurement} ms" end
+  # Determines if this backend is suitable for receiving packet, based
+  # on whether the failure threshold has been crossed.
+  @spec in_failure_threshold?(record(:tracking)) :: boolean()
+  defp in_failure_threshold?(
+         tracking(
+           consecutive_failures: fails,
+           max_failure_threshold: thres
+         )
+       )
+       when fails < thres do
+    true
+  end
 
-  defp log_descr(:pending_connection_is_zero),
-    do: fn -> "Call to decrement connections for backend when pending connections == 0" end
+  defp in_failure_threshold?(
+         tracking(
+           last_failure_time: last,
+           failure_backoff: backoff
+         )
+       ) do
+    now = :erlang.monotonic_time(:nano_seconds)
+    now - last > backoff
+  end
 
   @spec create_table() :: :observer
   defp create_table,

@@ -5,6 +5,7 @@ defmodule Brahman.Dns.Forwarder do
 
   use GenServer, restart: :temporary, shutdown: 5000
   use Brahman.Dns.Header
+  use Brahman.Logging
 
   require Logger
 
@@ -204,32 +205,4 @@ defmodule Brahman.Dns.Forwarder do
 
   defp do_callback(packet, %State{reply_fun: {fun, args}}),
     do: apply(fun, args ++ [packet])
-
-  @spec logging(Logger.level(), term()) :: :ok
-  defp logging(level, key), do: Logger.log(level, log_descr(key))
-
-  @spec log_descr(
-          {:decode_error, binary()}
-          | :no_upstreams_available
-          | {:upstream_reply, {:inet.ip4_address(), :inet.port_number()}, pid()}
-          | {:upstream_timeout, {:inet.ip4_address(), :inet.port_number()}, pid()}
-          | {:query_timeout, String.t()}
-        ) :: function()
-  defp log_descr({:decode_error, packet}),
-    do: fn -> "Undecodable packet given: packet = #{inspect(packet)}" end
-
-  defp log_descr(:no_upstreams_available),
-    do: fn -> "No upstream available" end
-
-  defp log_descr({:upstream_reply, {{ip, port}, _}, tdiff}),
-    do: fn -> "Received reply from #{:inet.ntoa(ip)}:#{port} in #{tdiff / 1000} msec" end
-
-  defp log_descr({:upstream_down, {{ip, port}, _}}),
-    do: fn -> "Upstream #{:inet.ntoa(ip)}:#{port} DOWN" end
-
-  defp log_descr({:upstream_timeout, {{ip, port}, _}}),
-    do: fn -> "Upstream #{:inet.ntoa(ip)}:#{port} TIMEOUT" end
-
-  defp log_descr({:query_timeout, name}),
-    do: fn -> "Query Timeout name = #{name}" end
 end

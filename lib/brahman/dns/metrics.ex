@@ -108,8 +108,7 @@ defmodule Brahman.Dns.Metrics do
 
   @spec calc_metrics(upstream()) :: float()
   defp calc_metrics(upstream) do
-
-    ((get_latency(upstream) / 1000) * (get_failed(upstream) * 10_000)) * get_selected(upstream)
+    get_latency(upstream) / 1000 * (get_failed(upstream) * 10_000) * get_selected(upstream)
   end
 
   @spec take_upstream_1([[upstream()]]) :: [upstream()]
