@@ -9,62 +9,62 @@ defmodule MetricTest do
     end)
   end
 
-  describe "Brahman.Dns.Metrics.get_failed/1" do
+  describe "Brahman.Metrics.Counters.get_failed/1" do
     test "with before failed/1" do
       server = {{8, 8, 8, 8}, 53}
-      value = Brahman.Dns.Metrics.get_failed(server)
+      value = Brahman.Metrics.Counters.get_failed(server)
       assert value == 0
     end
 
     test "with after failed/1" do
       server = {{8, 8, 8, 8}, 53}
-      :ok = Brahman.Dns.Metrics.failed(server)
-      value = Brahman.Dns.Metrics.get_failed(server)
+      :ok = Brahman.Metrics.Counters.failed(server)
+      value = Brahman.Metrics.Counters.get_failed(server)
       assert value in 0..1
     end
   end
 
-  describe "Brahman.Dns.Metrics.get_success/1" do
+  describe "Brahman.Metrics.Counters.get_success/1" do
     test "with before success/1" do
       server = {{8, 8, 8, 8}, 53}
-      value = Brahman.Dns.Metrics.get_success(server)
+      value = Brahman.Metrics.Counters.get_success(server)
       assert value == 0
     end
 
     test "with after success/1" do
       server = {{8, 8, 8, 8}, 53}
-      :ok = Brahman.Dns.Metrics.success(server)
-      value = Brahman.Dns.Metrics.get_success(server)
+      :ok = Brahman.Metrics.Counters.success(server)
+      value = Brahman.Metrics.Counters.get_success(server)
       assert value in 0..1
     end
   end
 
-  describe "Brahman.Dns.Metrics.get_latency/1" do
+  describe "Brahman.Metrics.Counters.get_latency/1" do
     test "with before latency/1" do
       server = {{8, 8, 8, 8}, 53}
-      value = Brahman.Dns.Metrics.get_latency(server)
+      value = Brahman.Metrics.Counters.get_latency(server)
       assert value == 0
     end
 
     test "with after latency/1" do
       server = {{8, 8, 8, 8}, 53}
-      :ok = Brahman.Dns.Metrics.latency(server, 500)
-      value = Brahman.Dns.Metrics.get_latency(server)
+      :ok = Brahman.Metrics.Counters.latency(server, 500)
+      value = Brahman.Metrics.Counters.get_latency(server)
       assert value in 0..1
     end
   end
 
-  describe "Brahman.Dns.Metrics.get_selected/1" do
+  describe "Brahman.Metrics.Counters.get_selected/1" do
     test "with before selected/1" do
       server = {{8, 8, 8, 8}, 53}
-      value = Brahman.Dns.Metrics.get_selected(server)
+      value = Brahman.Metrics.Counters.get_selected(server)
       assert value == 0
     end
 
     test "with after selected/1" do
       server = {{8, 8, 8, 8}, 53}
-      :ok = Brahman.Dns.Metrics.selected(server)
-      value = Brahman.Dns.Metrics.get_selected(server)
+      :ok = Brahman.Metrics.Counters.selected(server)
+      value = Brahman.Metrics.Counters.get_selected(server)
       assert value in 0..1
     end
   end

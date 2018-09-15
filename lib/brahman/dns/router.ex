@@ -6,7 +6,7 @@ defmodule Brahman.Dns.Router do
   use Brahman.Dns.Header
 
   alias Brahman.Config
-  alias Brahman.Dns.Metrics
+  alias Brahman.Metrics.Counters
 
   @typep upstream :: {:inet.ip4_address(), :inet.port_number()}
 
@@ -16,7 +16,7 @@ defmodule Brahman.Dns.Router do
       name
       |> parse_name_to_reversed_labels()
       |> find_upstream(name)
-      |> Metrics.select_upstreams()
+      |> Counters.select_upstreams()
 
     {upstreams, name}
   end
@@ -25,7 +25,7 @@ defmodule Brahman.Dns.Router do
     :ok =
       rest
       |> length()
-      |> Metrics.ignored()
+      |> Counters.ignored()
 
     upstream_from(question)
   end

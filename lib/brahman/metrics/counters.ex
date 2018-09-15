@@ -1,4 +1,4 @@
-defmodule Brahman.Dns.Metrics do
+defmodule Brahman.Metrics.Counters do
   @moduledoc """
   DNS metric instrumentations
   """

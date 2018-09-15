@@ -14,7 +14,16 @@ defmodule Brahman.Supervisor do
     modules: [Brahman.Dns]
   }
 
-  @children [@dns_forwarder_sup_spec]
+  @p2c_balancer %{
+    id: Brahman.Balancers.P2cEwma,
+    start: {Brahman.Balancers.P2cEwma, :start_link, []},
+    restart: :permanent,
+    shutdown: 5000,
+    type: :worker,
+    modules: [Brahman.Balancers.P2cEwma]
+  }
+
+  @children [@dns_forwarder_sup_spec, @p2c_balancer]
 
   def start_link do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)

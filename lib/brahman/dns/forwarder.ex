@@ -11,7 +11,7 @@ defmodule Brahman.Dns.Forwarder do
 
   alias Brahman.Dns.Router
   alias Brahman.Dns.Resolver
-  alias Brahman.Dns.Metrics
+  alias Brahman.Metrics.Counters
 
   @query_timeout 5000 * 2
 
@@ -75,7 +75,7 @@ defmodule Brahman.Dns.Forwarder do
     case Router.upstream_from(questions) do
       {[], _name} ->
         :ok = logging(:warn, :no_upstreams_available)
-        :ok = Metrics.no_upstreams()
+        :ok = Counters.no_upstreams()
         _ = send_servfail(state)
         {:stop, :normal, state}
 
@@ -107,13 +107,13 @@ defmodule Brahman.Dns.Forwarder do
 
   def handle_info({:upstream_timeout, {server, _} = upstream}, %State{} = state) do
     :ok = logging(:warn, {:upstream_timeout, upstream})
-    :ok = Metrics.failed(server)
+    :ok = Counters.failed(server)
     {:stop, :normal, state}
   end
 
   def handle_info({:upstream_down, {server, _} = upstream}, state) do
     :ok = logging(:warn, {:upstream_down, upstream})
-    :ok = Metrics.failed(server)
+    :ok = Counters.failed(server)
     maybe_done(upstream, state)
   end
 
@@ -123,7 +123,7 @@ defmodule Brahman.Dns.Forwarder do
       ) do
     tdiff = :timer.now_diff(:os.timestamp(), state.start_timestamp)
     :ok = logging(:debug, {:upstream_reply, upstream, tdiff})
-    :ok = Metrics.latency(server, tdiff)
+    :ok = Counters.latency(server, tdiff)
     _ = do_callback(packet, state)
     maybe_done(upstream, %{state | reply_sent: true})
   end
@@ -134,7 +134,7 @@ defmodule Brahman.Dns.Forwarder do
       ) do
     tdiff = :timer.now_diff(:os.timestamp(), state.start_timestamp)
     :ok = logging(:debug, {:upstream_reply, upstream, tdiff})
-    :ok = Metrics.latency(server, tdiff)
+    :ok = Counters.latency(server, tdiff)
     maybe_done(upstream, state)
   end
 

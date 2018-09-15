@@ -7,7 +7,7 @@ defmodule Brahman.Dns.Resolver do
 
   require Logger
 
-  alias Brahman.Dns.Metrics
+  alias Brahman.Metrics.Counters
 
   defmodule State do
     @moduledoc false
@@ -59,7 +59,7 @@ defmodule Brahman.Dns.Resolver do
   def handle_continue(:init, state0) do
     case try_send_packet(state0) do
       {:error, state} ->
-        :ok = Metrics.selected(state.upstream)
+        :ok = Counters.selected(state.upstream)
         :ok = notify_result(:down, state)
         {:stop, :normal, state}
 

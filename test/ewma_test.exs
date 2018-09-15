@@ -110,37 +110,43 @@ defmodule EwmaTest do
   @mergin 0.00000001
 
   test "with Simple EWMA" do
-    ewma0 = %Brahman.Ewma.Simple{}
-    ewma1 = Enum.reduce(@samples, ewma0, &Brahman.Ewma.add(&2, &1))
+    ewma0 = %Brahman.Metrics.Ewma.Simple{}
+    ewma1 = Enum.reduce(@samples, ewma0, &Brahman.Metrics.Ewma.add(&2, &1))
     assert within_mergin?(ewma1.value, 4734.500946466118)
-    assert Brahman.Ewma.set(ewma1, 1.0).value == 1.0
+    assert Brahman.Metrics.Ewma.set(ewma1, 1.0).value == 1.0
+  end
+
+  test "with Peak EWMA" do
+    ewma0 = %Brahman.Metrics.Ewma.Peak{}
+    ewma1 = Enum.reduce(@samples, ewma0, &Brahman.Metrics.Ewma.add(&2, &1))
+    assert Brahman.Metrics.Ewma.set(ewma1, 1.0).value == 1.0
   end
 
   test "with Simple EWMA and age = 30" do
-    ewma0 = Brahman.Ewma.new(30)
-    ewma1 = Enum.reduce(@samples, ewma0, &Brahman.Ewma.add(&2, &1))
+    ewma0 = Brahman.Metrics.Ewma.new(30)
+    ewma1 = Enum.reduce(@samples, ewma0, &Brahman.Metrics.Ewma.add(&2, &1))
     assert within_mergin?(ewma1.value, 4734.500946466118)
-    assert Brahman.Ewma.set(ewma1, 1.0).value == 1.0
+    assert Brahman.Metrics.Ewma.set(ewma1, 1.0).value == 1.0
   end
 
   test "with Variable EWMA with age = 5" do
-    ewma0 = Brahman.Ewma.new(5)
-    ewma1 = Enum.reduce(@samples, ewma0, &Brahman.Ewma.add(&2, &1))
+    ewma0 = Brahman.Metrics.Ewma.new(5)
+    ewma1 = Enum.reduce(@samples, ewma0, &Brahman.Metrics.Ewma.add(&2, &1))
     assert within_mergin?(ewma1.value, 5015.397367486725)
   end
 
   test "with Variable EWMA with warmup 1" do
-    _ = Enum.reduce(@samples, {Brahman.Ewma.new(5), 1}, &check_warmup/2)
-    ewma0 = Brahman.Ewma.new(5)
-    ewma1 = Brahman.Ewma.set(ewma0, 5)
-    ewma2 = Brahman.Ewma.add(ewma1, 1)
-    refute Brahman.Ewma.value(ewma2) >= 5
+    _ = Enum.reduce(@samples, {Brahman.Metrics.Ewma.new(5), 1}, &check_warmup/2)
+    ewma0 = Brahman.Metrics.Ewma.new(5)
+    ewma1 = Brahman.Metrics.Ewma.set(ewma0, 5)
+    ewma2 = Brahman.Metrics.Ewma.add(ewma1, 1)
+    refute Brahman.Metrics.Ewma.value(ewma2) >= 5
   end
 
   test "with Variable EWMA with " do
     samples = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10_000, 1] |> Enum.map(&:erlang.float/1)
-    {ewma, _count} = Enum.reduce(@samples, {Brahman.Ewma.new(5), 1}, &check_warmup/2)
-    refute Brahman.Ewma.value(ewma) == 1.0
+    {ewma, _count} = Enum.reduce(@samples, {Brahman.Metrics.Ewma.new(5), 1}, &check_warmup/2)
+    refute Brahman.Metrics.Ewma.value(ewma) == 1.0
   end
 
   # helper
@@ -148,8 +154,8 @@ defmodule EwmaTest do
   defp within_mergin?(a, expect), do: abs(a - expect) <= @mergin
 
   defp check_warmup(value, {tmp_ewma, count}) do
-    ewma = Brahman.Ewma.add(tmp_ewma, value)
-    if count < 10, do: assert(Brahman.Ewma.value(ewma) == 0.0)
+    ewma = Brahman.Metrics.Ewma.add(tmp_ewma, value)
+    if count < 10, do: assert(Brahman.Metrics.Ewma.value(ewma) == 0.0)
     {ewma, count + 1}
   end
 end
