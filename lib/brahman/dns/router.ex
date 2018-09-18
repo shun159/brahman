@@ -7,6 +7,7 @@ defmodule Brahman.Dns.Router do
 
   alias Brahman.Config
   alias Brahman.Metrics.Counters
+  alias Brahman.Balancers.P2cEwma
 
   @typep upstream :: {:inet.ip4_address(), :inet.port_number()}
 
@@ -16,9 +17,14 @@ defmodule Brahman.Dns.Router do
       name
       |> parse_name_to_reversed_labels()
       |> find_upstream(name)
-      |> Counters.select_upstreams()
 
-    {upstreams, name}
+    best_upstreams =
+      Enum.map(1..2, fn _ ->
+        {:ok, server} = P2cEwma.pick_upstream(upstreams)
+        server
+      end)
+
+    {best_upstreams, name}
   end
 
   def upstream_from([question | rest]) do

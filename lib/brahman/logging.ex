@@ -12,7 +12,9 @@ defmodule Brahman.Logging do
 
       @spec log_descr(tuple() | atom()) :: function()
       defp log_descr({:observing_success, success, measurement}),
-        do: fn -> "Observing connection success: #{success} with time of #{measurement} ms" end
+        do: fn ->
+          "Observing connection success: #{success} with time of #{measurement} nano seconds"
+        end
 
       defp log_descr(:pending_connection_is_zero),
         do: fn -> "Call to decrement connections for backend when pending connections == 0" end

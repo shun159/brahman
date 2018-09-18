@@ -33,12 +33,7 @@ defmodule BalancerP2cEwmaTest do
         {{1, 1, 1, 1}, 53}
       ]
 
-      upstream =
-        servers
-        |> Brahman.Balancers.P2cEwma.pick_upstream()
-        |> Kernel.elem(1)
-        |> Kernel.elem(1)
-
+      {:ok, upstream} = Brahman.Balancers.P2cEwma.pick_upstream(servers)
       assert upstream == {{1, 1, 1, 1}, 53}
     end
   end

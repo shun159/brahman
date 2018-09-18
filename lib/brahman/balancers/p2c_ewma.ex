@@ -66,6 +66,15 @@ defmodule Brahman.Balancers.P2cEwma do
   def handle_continue(:init, state) do
     _ = make_seed()
     _ = create_table()
+
+    :ok =
+      Brahman.Config.upstream_resolvers()
+      |> Enum.each(&get_ewma/1)
+
+    :ok =
+      Brahman.Config.erldns_servers()
+      |> Enum.each(&get_ewma/1)
+
     {:noreply, state}
   end
 
@@ -140,9 +149,9 @@ defmodule Brahman.Balancers.P2cEwma do
         choice =
           choices
           |> Enum.take_random(2)
-          |> Enum.max_by(fn upstream(ewma: ewma) -> Ewma.value(ewma) end)
+          |> Enum.min_by(fn upstream(ewma: ewma) -> Ewma.value(ewma) end)
 
-        {:ok, choice}
+        {:ok, upstream(choice, :ip_port)}
     end
   end
 

@@ -12,6 +12,7 @@ defmodule Brahman.Dns.Forwarder do
   alias Brahman.Dns.Router
   alias Brahman.Dns.Resolver
   alias Brahman.Metrics.Counters
+  alias Brahman.Balancers.P2cEwma
 
   @query_timeout 5000 * 2
 
@@ -107,12 +108,16 @@ defmodule Brahman.Dns.Forwarder do
 
   def handle_info({:upstream_timeout, {server, _} = upstream}, %State{} = state) do
     :ok = logging(:warn, {:upstream_timeout, upstream})
+    tdiff = :timer.now_diff(:os.timestamp(), state.start_timestamp)
+    :ok = P2cEwma.observe(tdiff, server, false)
     :ok = Counters.failed(server)
     {:stop, :normal, state}
   end
 
   def handle_info({:upstream_down, {server, _} = upstream}, state) do
     :ok = logging(:warn, {:upstream_down, upstream})
+    tdiff = :timer.now_diff(:os.timestamp(), state.start_timestamp)
+    :ok = P2cEwma.observe(tdiff, server, false)
     :ok = Counters.failed(server)
     maybe_done(upstream, state)
   end
@@ -124,6 +129,7 @@ defmodule Brahman.Dns.Forwarder do
     tdiff = :timer.now_diff(:os.timestamp(), state.start_timestamp)
     :ok = logging(:debug, {:upstream_reply, upstream, tdiff})
     :ok = Counters.latency(server, tdiff)
+    :ok = P2cEwma.observe(tdiff, server, true)
     _ = do_callback(packet, state)
     maybe_done(upstream, %{state | reply_sent: true})
   end
@@ -134,6 +140,7 @@ defmodule Brahman.Dns.Forwarder do
       ) do
     tdiff = :timer.now_diff(:os.timestamp(), state.start_timestamp)
     :ok = logging(:debug, {:upstream_reply, upstream, tdiff})
+    :ok = P2cEwma.observe(tdiff, server, true)
     :ok = Counters.latency(server, tdiff)
     maybe_done(upstream, state)
   end

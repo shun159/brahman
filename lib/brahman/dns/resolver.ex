@@ -8,6 +8,7 @@ defmodule Brahman.Dns.Resolver do
   require Logger
 
   alias Brahman.Metrics.Counters
+  alias Brahman.Balancers.P2cEwma
 
   defmodule State do
     @moduledoc false
@@ -50,6 +51,7 @@ defmodule Brahman.Dns.Resolver do
 
   def init([upstream, data, parent]) do
     _ = Process.flag(:trap_exit, true)
+    :ok = P2cEwma.set_pending(upstream)
     state = %State{upstream: upstream, data: data, parent: parent}
     {:ok, state, {:continue, :init}}
   end
