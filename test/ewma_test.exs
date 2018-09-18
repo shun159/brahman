@@ -145,7 +145,7 @@ defmodule EwmaTest do
 
   test "with Variable EWMA with " do
     samples = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10_000, 1] |> Enum.map(&:erlang.float/1)
-    {ewma, _count} = Enum.reduce(@samples, {Brahman.Metrics.Ewma.new(5), 1}, &check_warmup/2)
+    {ewma, _count} = Enum.reduce(samples, {Brahman.Metrics.Ewma.new(5), 1}, &check_warmup/2)
     refute Brahman.Metrics.Ewma.value(ewma) == 1.0
   end
 

@@ -23,7 +23,7 @@ defmodule Brahman.Supervisor do
     modules: [Brahman.Balancers.P2cEwma]
   }
 
-  @children [@dns_forwarder_sup_spec, @p2c_balancer]
+  @children [@p2c_balancer, @dns_forwarder_sup_spec]
 
   def start_link do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)

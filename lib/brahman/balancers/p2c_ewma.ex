@@ -140,17 +140,20 @@ defmodule Brahman.Balancers.P2cEwma do
         choice =
           choices
           |> Enum.take_random(2)
-          |> Enum.max_by(fn(upstream(ewma: ewma)) -> Ewma.value(ewma) end)
+          |> Enum.max_by(fn upstream(ewma: ewma) -> Ewma.value(ewma) end)
+
         {:ok, choice}
     end
   end
 
   @spec is_open?(record(:upstream)) :: boolean()
   defp is_open?(
-    upstream(
-      consecutive_failures: fails,
-      max_failure_threshold: thres
-    )) when fails < thres do
+         upstream(
+           consecutive_failures: fails,
+           max_failure_threshold: thres
+         )
+       )
+       when fails < thres do
     true
   end
 
@@ -196,7 +199,7 @@ defmodule Brahman.Balancers.P2cEwma do
       [] ->
         upstream(ip_port: upstream)
 
-      entry ->
+      [entry | _] ->
         entry
     end
   end
