@@ -22,6 +22,7 @@ defmodule BalancerP2cEwmaTest do
       upstream = {{8, 8, 8, 8}, 53}
       success = true
 
+      :ok = Brahman.Balancers.P2cEwma.set_pending(upstream)
       :ok = Brahman.Balancers.P2cEwma.observe(msec, upstream, success)
     end
   end

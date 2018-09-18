@@ -13,18 +13,14 @@ defmodule Brahman.Dns.Router do
 
   @spec upstream_from([record(:dns_query)]) :: {[upstream()], String.t()}
   def upstream_from([dns_query(name: name)]) do
-    upstreams =
+    upstream =
       name
       |> parse_name_to_reversed_labels()
       |> find_upstream(name)
+      |> P2cEwma.pick_upstream()
+      |> Kernel.elem(1)
 
-    best_upstreams =
-      Enum.map(1..2, fn _ ->
-        {:ok, server} = P2cEwma.pick_upstream(upstreams)
-        server
-      end)
-
-    {best_upstreams, name}
+    {[upstream], name}
   end
 
   def upstream_from([question | rest]) do

@@ -151,14 +151,15 @@ defmodule Brahman.Metrics.Ewma do
 
   def value(%Variable{value: value}), do: value
 
-  def value(%Peak{value: cost, penalty: penalty} = ewma) when cost == 0 and penalty == 0,
+  # If we don't have any latency history, we penalize the host on
+  # the first probe. Otherwise, we factor in our current rate
+  # assuming we were to schedule an additional request.
+  def value(%Peak{value: cost, pending: pending} = ewma)
+      when cost == 0 and pending != 0,
+      do: ewma.penalty + ewma.pending
+
+  def value(%Peak{value: cost} = ewma),
     do: cost * (ewma.pending + 1)
-
-  def value(%Peak{value: cost} = ewma) when cost == 0,
-    do: ewma.penalty + ewma.pending
-
-  def value(%Peak{} = ewma),
-    do: ewma.value * (ewma.pending + 1)
 
   @spec set(Simple.t() | Peak.t() | Variable.t(), float()) :: Simple.t() | Variable.t()
   def set(%Variable{count: count} = ewma0, value) do

@@ -20,7 +20,7 @@ defmodule RouterTest do
         |> Brahman.Dns.Router.upstream_from()
 
       assert name == "google.com"
-      assert length(upstreams) == 2
+      assert length(upstreams) == 1
     end
   end
 end
