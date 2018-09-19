@@ -33,6 +33,7 @@ defmodule Brahman.Balancers.P2cEwma do
   def set_pending(upstream),
     do: GenServer.call(__MODULE__, {:set_pending, upstream})
 
+  @spec observe(number(), ip_port(), boolean()) :: :ok
   def observe(measurement, upstream, success),
     do: GenServer.cast(__MODULE__, {:observe, measurement, upstream, success})
 
@@ -42,7 +43,7 @@ defmodule Brahman.Balancers.P2cEwma do
   Load Balancing. IEEE Trans. Parallel Distrib. Syst. 12,
   10 (October 2001), 1094-1104.
   """
-  @spec pick_upstream([ip_port()]) :: {:ok, record(:upstream)} | {:error, term()}
+  @spec pick_upstream([ip_port()]) :: {:ok, ip_port()} | {:error, term()}
   def pick_upstream(upstreams = [_ | _]),
     do: GenServer.call(__MODULE__, {:pick_upstream, upstreams}, 1000)
 
