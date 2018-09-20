@@ -19,7 +19,7 @@ defmodule Brahman.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :erldns, :folsom, :elixometer, :maru, :cowboy, :jason, :sasl],
+      extra_applications: [:logger, :erldns, :folsom, :elixometer, :plug, :cowboy, :poison, :sasl],
       mod: {Brahman.Application, []}
     ]
   end
@@ -52,9 +52,9 @@ defmodule Brahman.MixProject do
       {:elixometer, github: "pinterest/elixometer"},
       {:parse_trans, "~> 3.2.0", override: true},
       # Core: REST
-      {:maru, "~> 0.13"},
+      {:plug, "~> 1.6.3"},
       {:cowboy, "~> 2.4"},
-      {:jason, "~> 1.0"},
+      {:poison, "~> 4.0.1"},
       # Logging
       {:lager, ">= 3.5.2", override: true, manager: :rebar3},
       # Code Quality
