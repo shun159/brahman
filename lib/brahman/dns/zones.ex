@@ -26,6 +26,7 @@ defmodule Brahman.Dns.Zones do
     case :erldns_zone_cache.get_records_by_name(name) do
       [] ->
         []
+
       records ->
         to_map(records, [])
     end
@@ -65,59 +66,59 @@ defmodule Brahman.Dns.Zones do
   defp to_map(dns_rrdata_spf(spf: spf)), do: %{spf: spf}
 
   defp to_map(
-    dns_rrdata_srv(
-      priority: priority,
-      weight: weight,
-      port: port,
-      target: target
-    )
-  ) do
-    %{priority: priority,
-      weight: weight,
-      port: port,
-      target: target}
+         dns_rrdata_srv(
+           priority: priority,
+           weight: weight,
+           port: port,
+           target: target
+         )
+       ) do
+    %{priority: priority, weight: weight, port: port, target: target}
   end
 
   defp to_map(
-    dns_rrdata_sshfp(
-      alg: alg,
-      fp_type: fp_type,
-      fp: fp
-    )
-  ) do
-    %{alg: alg,
-      fp_type: fp_type,
-      fp: fp}
+         dns_rrdata_sshfp(
+           alg: alg,
+           fp_type: fp_type,
+           fp: fp
+         )
+       ) do
+    %{alg: alg, fp_type: fp_type, fp: fp}
   end
 
   defp to_map(
-    dns_rrdata_mx(
-      exchange: exchange,
-      preference: preference
-    )
-  ) do
-    %{exchange: exchange,
-      preference: preference}
+         dns_rrdata_mx(
+           exchange: exchange,
+           preference: preference
+         )
+       ) do
+    %{exchange: exchange, preference: preference}
   end
 
   defp to_map(
-    dns_rrdata_naptr(
-      order: order,
-      preference: preference,
-      flags: flags,
-      services: services,
-      regexp: regexp
-    )
-  ) do
-    %{order: order,
-      preference: preference,
-      flags: flags,
-      services: services,
-      regexp: regexp}
+         dns_rrdata_naptr(
+           order: order,
+           preference: preference,
+           flags: flags,
+           services: services,
+           regexp: regexp
+         )
+       ) do
+    %{order: order, preference: preference, flags: flags, services: services, regexp: regexp}
   end
 
   defp to_map(
-    dns_rrdata_soa(
+         dns_rrdata_soa(
+           mname: mname,
+           rname: rname,
+           serial: serial,
+           refresh: refresh,
+           retry: retry,
+           expire: expire,
+           minimum: minimum
+         )
+       ) do
+    %{
       mname: mname,
       rname: rname,
       serial: serial,
@@ -125,15 +126,7 @@ defmodule Brahman.Dns.Zones do
       retry: retry,
       expire: expire,
       minimum: minimum
-    )
-  ) do
-    %{mname: mname,
-      rname: rname,
-      serial: serial,
-      refresh: refresh,
-      retry: retry,
-      expire: expire,
-      minimum: minimum }
+    }
   end
 
   defp to_map(_undefined), do: throw(:unknown)
@@ -158,6 +151,7 @@ defmodule Brahman.Dns.Zones do
     case :inet.parse_address(~c"#{data.ip}") do
       {:ok, ip} ->
         dns_rrdata_a(ip: ip)
+
       {:error, _} ->
         throw(:ip4_address)
     end
@@ -167,6 +161,7 @@ defmodule Brahman.Dns.Zones do
     case :inet.parse_address(~c"#{data.ip}") do
       {:ok, ip} ->
         dns_rrdata_aaaa(ip: ip)
+
       {:error, _} ->
         throw(:ip6_address)
     end
@@ -188,45 +183,50 @@ defmodule Brahman.Dns.Zones do
     do: dns_rrdata_spf(spf: data.spf)
 
   defp to_record("SRV", data),
-    do: dns_rrdata_srv(
-          priority: data.priority,
-          weight: data.weight,
-          port: data.port,
-          target: data.target
-        )
+    do:
+      dns_rrdata_srv(
+        priority: data.priority,
+        weight: data.weight,
+        port: data.port,
+        target: data.target
+      )
 
   defp to_record("SSHFP", data),
-    do: dns_rrdata_sshfp(
-          alg: data.alg,
-          fp_type: data.fp_type,
-          fp: Base.decode16!(data.fp, case: :mixed)
-        )
+    do:
+      dns_rrdata_sshfp(
+        alg: data.alg,
+        fp_type: data.fp_type,
+        fp: Base.decode16!(data.fp, case: :mixed)
+      )
 
   defp to_record("MX", data),
-    do: dns_rrdata_mx(
-          exchange: data.exchange,
-          preference: data.preference
-        )
+    do:
+      dns_rrdata_mx(
+        exchange: data.exchange,
+        preference: data.preference
+      )
 
   defp to_record("NAPTR", data),
-    do: dns_rrdata_naptr(
-          order: data.order,
-          preference: data.preference,
-          flags: data.flags,
-          services: data.services,
-          regexp: data.regexp
-        )
+    do:
+      dns_rrdata_naptr(
+        order: data.order,
+        preference: data.preference,
+        flags: data.flags,
+        services: data.services,
+        regexp: data.regexp
+      )
 
   defp to_record("SOA", data),
-    do: dns_rrdata_soa(
-          mname: data.mname,
-          rname: data.rname,
-          serial: data.serial,
-          refresh: data.refresh,
-          retry: data.retry,
-          expire: data.expire,
-          minimum: data.minimum
-        )
+    do:
+      dns_rrdata_soa(
+        mname: data.mname,
+        rname: data.rname,
+        serial: data.serial,
+        refresh: data.refresh,
+        retry: data.retry,
+        expire: data.expire,
+        minimum: data.minimum
+      )
 
   defp to_record(_type, _data), do: {:error, :unknown}
 end
