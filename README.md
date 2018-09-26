@@ -28,23 +28,23 @@ The `handler_fn` is a higher order function or form of `{function(), [:args]}`.
 
 - `Brahman.Dns.Zones.put/2`
   ```elixir
-  name = "google.com"
+  name = "example.com"
 
   records = [
     %{
-      name: "dummy1.google.com",
+      name: "dummy1.example.com",
       type: "A",
       ttl: 3600,
       data: %{ip: "192.168.5.1"}
     },
     %{
-      name: "dummy2.google.com",
+      name: "dummy2.example.com",
       type: "A",
       ttl: 3600,
       data: %{ip: "192.168.5.2"}
     },
     %{
-      name: "dummy3.google.com",
+      name: "dummy3.example.com",
       type: "A",
       ttl: 3600,
       data: %{ip: "192.168.5.3"}
@@ -56,13 +56,13 @@ The `handler_fn` is a higher order function or form of `{function(), [:args]}`.
 
 - `Brahman.Dns.Zones.get/1`
   ```elixir
-  ^records = Brahman.Dns.Zones.get("google.com")
+  ^records = Brahman.Dns.Zones.get("example.com")
   ```
 
 - `Brahman.Dns.Zones.delete/1`
   ```elixir
-  :ok = Brahman.Dns.Zones.delete("google.com")
-  [] = Brahman.Dns.Zones.get("google.com")
+  :ok = Brahman.Dns.Zones.delete("example.com")
+  [] = Brahman.Dns.Zones.get("example.com")
   ```
 
 Status

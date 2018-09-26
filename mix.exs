@@ -44,6 +44,7 @@ defmodule Brahman.MixProject do
     [
       # Core: DNS libraries and pipeline processing libraries
       {:erldns, github: "dcos/erl-dns"},
+      {:dns, github: "dnsimple/dns_erlang", manger: :mix, override: true},
       {:gen_stage, "~> 0.14"},
       # Core: Instrumentation
       {:meck, "~> 0.8.9", override: true},

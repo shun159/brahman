@@ -1,0 +1,2 @@
+defmodule NFQ do
+end
