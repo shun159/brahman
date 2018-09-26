@@ -26,37 +26,30 @@ The `handler_fn` is a higher order function or form of `{function(), [:args]}`.
 
 ### Zone Interfaces
 
-simple API for zone record:
-
 - `Brahman.Dns.Zones.put/2`
   ```elixir
-    name = "example.com"
+  name = "example.com"
 
-    records = [
-      %{
-        type: "A",
-        ttl: 3600,
-        data: %{ip: "192.168.5.200"}
-      },
-      %{
-        type: "CNAME",
-        ttl: 3600,
-        data: %{dname: "example.com"}
-      },
-      %{
-        type: "SOA",
-        ttl: 3600,
-        data: %{
-          mname: "ns.brahman",
-          rname: "support.brahman.com",
-          serial: 0,
-          refresh: 60,
-          retry: 180,
-          expire: 86400,
-          minimum: 1
-        }
-      }
-    ]
+  records = [
+    %{
+      name: "dummy1.example.com",
+      type: "A",
+      ttl: 3600,
+      data: %{ip: "192.168.5.1"}
+    },
+    %{
+      name: "dummy2.example.com",
+      type: "A",
+      ttl: 3600,
+      data: %{ip: "192.168.5.2"}
+    },
+    %{
+      name: "dummy3.example.com",
+      type: "A",
+      ttl: 3600,
+      data: %{ip: "192.168.5.3"}
+    }
+  ]
 
   :ok = Brahman.Dns.Zones.put(name, records)
   ```
