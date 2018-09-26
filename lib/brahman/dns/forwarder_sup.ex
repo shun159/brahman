@@ -13,7 +13,13 @@ defmodule Brahman.Dns.ForwarderSup do
   # ConsumerSupervisor callback functions
 
   def init(_args) do
-    children = [Brahman.Dns.Forwarder]
+    children = [
+      %{
+        id: Brahman.Dns.Forwarder,
+        start: {Brahman.Dns.Forwarder, :start_link, []},
+        restart: :temporary
+      }
+    ]
 
     ConsumerSupervisor.init(
       children,

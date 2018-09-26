@@ -32,7 +32,7 @@ defmodule Brahman.Dns.Handler do
   end
 
   def handle_cast({:handle, query, handler_fn}, state) do
-    {:noreply, [query, handler_fn], state}
+    {:noreply, [{query, handler_fn}], state}
   end
 
   def handle_cast(_msg, state) do

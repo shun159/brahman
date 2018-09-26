@@ -46,8 +46,8 @@ defmodule Brahman.Dns.Forwarder do
 
   @type reply_fun :: (binary() -> :ok) | {(... -> :ok), [term()]}
 
-  @spec start_link(dns_packet :: binary(), reply_fun()) :: GenServer.on_start()
-  def start_link(dns_packet, reply_fun) do
+  @spec start_link({binary(), reply_fun()}) :: GenServer.on_start()
+  def start_link({dns_packet, reply_fun}) do
     GenServer.start_link(__MODULE__, [dns_packet, reply_fun])
   end
 

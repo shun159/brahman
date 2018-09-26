@@ -19,7 +19,7 @@ Aims to make it as easy as possible to build DNS LB/Server.
 ```elixir
 iex> packet = File.read!("test/packet_data/dns_query.raw")
 iex> handler_fn = &IO.inspect/1
-iex> Brahman.Dns.Forwarder.start_link(packet, handler_fn)
+iex> Brahman.Dns.Handler.handle(packet, handler_fn)
 ```
 
 The `handler_fn` is a higher order function or form of `{function(), [:args]}`.  
@@ -28,23 +28,23 @@ The `handler_fn` is a higher order function or form of `{function(), [:args]}`.
 
 - `Brahman.Dns.Zones.put/2`
   ```elixir
-  name = "example.com"
+  name = "google.com"
 
   records = [
     %{
-      name: "dummy1.example.com",
+      name: "dummy1.google.com",
       type: "A",
       ttl: 3600,
       data: %{ip: "192.168.5.1"}
     },
     %{
-      name: "dummy2.example.com",
+      name: "dummy2.google.com",
       type: "A",
       ttl: 3600,
       data: %{ip: "192.168.5.2"}
     },
     %{
-      name: "dummy3.example.com",
+      name: "dummy3.google.com",
       type: "A",
       ttl: 3600,
       data: %{ip: "192.168.5.3"}
@@ -56,13 +56,13 @@ The `handler_fn` is a higher order function or form of `{function(), [:args]}`.
 
 - `Brahman.Dns.Zones.get/1`
   ```elixir
-  ^records = Brahman.Dns.Zones.get("example.com")
+  ^records = Brahman.Dns.Zones.get("google.com")
   ```
 
 - `Brahman.Dns.Zones.delete/1`
   ```elixir
-  :ok = Brahman.Dns.Zones.delete("example.com")
-  [] = Brahman.Dns.Zones.get("example.com")
+  :ok = Brahman.Dns.Zones.delete("google.com")
+  [] = Brahman.Dns.Zones.get("google.com")
   ```
 
 Status
