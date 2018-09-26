@@ -43,13 +43,24 @@ defmodule Brahman.Dns.Router do
   end
 
   @spec find_upstream([String.t()], String.t()) :: [upstream()]
-  defp find_upstream(labels, _name) do
+  defp find_upstream(labels, name) do
     case find_custom_upstream(labels) do
       [] ->
-        Config.upstream_resolvers()
+        find_upstream(name)
 
       resolvers ->
         resolvers
+    end
+  end
+
+  @spec find_upstream(String.t()) :: [upstream()]
+  defp find_upstream(name) do
+    case Brahman.Dns.Zones.get(name) do
+      [] ->
+        Config.upstream_resolvers()
+
+      [_ | _] ->
+        Config.erldns_servers()
     end
   end
 

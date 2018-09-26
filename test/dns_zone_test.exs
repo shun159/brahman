@@ -25,6 +25,11 @@ defmodule DnsZoneTest do
         data: %{dname: "example.com"}
       },
       %{
+        type: "NS",
+        ttl: 3600,
+        data: %{dname: "ns2.example.com"}
+      },
+      %{
         type: "SOA",
         ttl: 3600,
         data: %{

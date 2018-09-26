@@ -65,6 +65,8 @@ defmodule Brahman.Dns.Zones do
 
   defp to_map(dns_rrdata_spf(spf: spf)), do: %{spf: spf}
 
+  defp to_map(dns_rrdata_ns(dname: name)), do: %{dname: name}
+
   defp to_map(
          dns_rrdata_srv(
            priority: priority,
