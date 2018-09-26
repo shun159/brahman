@@ -31,7 +31,7 @@ defmodule Brahman.Balancers.P2cEwma do
 
   @spec set_pending(ip_port()) :: :ok
   def set_pending(upstream),
-    do: GenServer.call(__MODULE__, {:set_pending, upstream})
+    do: GenServer.cast(__MODULE__, {:set_pending, upstream})
 
   @spec observe(number(), ip_port(), boolean()) :: :ok
   def observe(measurement, upstream, success),
@@ -45,7 +45,7 @@ defmodule Brahman.Balancers.P2cEwma do
   """
   @spec pick_upstream([ip_port()]) :: {:ok, ip_port()} | {:error, term()}
   def pick_upstream(upstreams = [_ | _]),
-    do: GenServer.call(__MODULE__, {:pick_upstream, upstreams}, 1000)
+    do: do_pick_backend(upstreams)
 
   def pick_upstream(_upstream),
     do: {:error, :no_upstream_available}
@@ -78,18 +78,18 @@ defmodule Brahman.Balancers.P2cEwma do
     {:reply, do_pick_backend(upstreams), state}
   end
 
-  def handle_call({:set_pending, upstream}, _from, state) do
+  def handle_call(_request, _from, state) do
+    {:reply, :ok, state}
+  end
+
+  def handle_cast({:set_pending, upstream}, state) do
     true =
       upstream
       |> get_ewma()
       |> increment_pending()
       |> insert_ewma()
 
-    {:reply, :ok, state}
-  end
-
-  def handle_call(_request, _from, state) do
-    {:reply, :ok, state}
+    {:noreply, state}
   end
 
   def handle_cast({:observe, measurement, upstream, success}, state) do

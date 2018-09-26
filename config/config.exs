@@ -15,6 +15,20 @@ config :erldns,
       port: 8053,
       family: :inet,
       processes: 10
+    ],
+    [
+      name: :inet_localhost_2,
+      address: '127.0.0.1',
+      port: 8054,
+      family: :inet,
+      processes: 10
+    ],
+    [
+      name: :inet_localhost_3,
+      address: '127.0.0.1',
+      port: 8055,
+      family: :inet,
+      processes: 10
     ]
   ],
   dnssec: [enabled: false],
