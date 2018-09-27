@@ -7,7 +7,6 @@ defmodule NFQ.Handler do
   require Record
 
   alias NFQ.IPTables
-  alias Brahman.Dns
 
   @pkt_header "pkt/include/pkt.hrl"
 
@@ -25,7 +24,8 @@ defmodule NFQ.Handler do
   def nfq_init(_opts) do
     :ok = init_iptables()
     :ok = init_zone()
-    {}
+    {:ok, pid} = NFQ.Resolver.start_link()
+    %{resolver: pid}
   end
 
   def nfq_verdict(_family, info, state) do
@@ -34,7 +34,7 @@ defmodule NFQ.Handler do
     new_ip_packet =
       packet
       |> parse_packet()
-      |> do_resolve()
+      |> do_resolve(state)
       |> update_packet()
 
     {@nf_accept, [payload: new_ip_packet], state}
@@ -80,22 +80,9 @@ defmodule NFQ.Handler do
     [ipv4(), udp(), _payload] = :pkt.decapsulate(:ipv4, packet)
   end
 
-  defp do_resolve([ip, udp, payload]) do
-    {:ok, pid} = Task.Supervisor.start_link()
-
-    task =
-      Task.Supervisor.async(pid, fn ->
-        :ok = Dns.Handler.handle(payload, {&Kernel.send/2, [self()]})
-
-        receive do
-          reply when is_binary(reply) -> [ip, udp, reply]
-        after
-          10000 ->
-            {:error, :timeout}
-        end
-      end)
-
-    Task.await(task)
+  defp do_resolve([ip, udp, payload], state) do
+    {:ok, packet} = NFQ.Resolver.process(state.resolver, payload)
+    [ip, udp, packet]
   end
 
   defp update_packet([

@@ -48,8 +48,6 @@ DNS packet------>| | iptables     |                     |
 
 ;; ANSWER SECTION:
 dummy1.example.com.     3600    IN      A       192.168.5.1
-dummy2.example.com.     3600    IN      A       192.168.5.2
-dummy3.example.com.     3600    IN      A       192.168.5.3
 
 ;; Query time: 4 msec
 ;; SERVER: 127.0.0.1#8054(127.0.0.1)
@@ -62,15 +60,15 @@ very simple implementation but this example is slow.
 ```
 Statistics:
 
-  Queries sent:         14817
-  Queries completed:    12976 (87.58%)
-  Queries lost:         1841 (12.42%)
+  Queries sent:         51819
+  Queries completed:    51819 (100.00%)
+  Queries lost:         0 (0.00%)
 
-  Response codes:       NOERROR 12976 (100.00%)
+  Response codes:       NOERROR 51819 (100.00%)
   Average packet size:  request 29, response 98
-  Run time (s):         10.158811
-  Queries per second:   1277.314835
+  Run time (s):         30.009108
+  Queries per second:   1726.775751
 
-  Average Latency (s):  0.068880 (min 0.000638, max 0.425337)
-  Latency StdDev (s):   0.073219
+  Average Latency (s):  0.005773 (min 0.015731, max 0.077301)
+  Latency StdDev (s):   0.001443
 ```
