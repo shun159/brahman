@@ -54,7 +54,6 @@ defmodule Brahman.Dns.Forwarder do
   # GenServer callback functions
 
   def init([dns_packet, reply_fun]) do
-    _ = :rand.seed(:exsplus, :os.timestamp())
     {:ok, %State{dns_packet: dns_packet, reply_fun: reply_fun}, {:continue, :INIT}}
   end
 

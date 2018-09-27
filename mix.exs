@@ -19,7 +19,7 @@ defmodule Brahman.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :erldns, :folsom, :elixometer, :plug, :cowboy, :poison, :sasl],
+      extra_applications: [:logger, :erldns, :folsom, :elixometer, :sasl],
       mod: {Brahman.Application, []}
     ]
   end
@@ -47,15 +47,11 @@ defmodule Brahman.MixProject do
       {:dns, github: "dnsimple/dns_erlang", manger: :mix, override: true},
       {:gen_stage, "~> 0.14"},
       # Core: Instrumentation
-      {:meck, "~> 0.8.9", override: true},
+      {:meck, "~> 0.8.9", override: true, runtime: false},
       {:folsom, github: "boundary/folsom", branch: "master", override: true},
       {:exometer_core, github: "esl/exometer_core", override: true},
       {:elixometer, github: "pinterest/elixometer"},
       {:parse_trans, "~> 3.2.0", override: true},
-      # Core: REST
-      {:plug, "~> 1.6.3"},
-      {:cowboy, "~> 2.4"},
-      {:poison, "~> 4.0.1"},
       # Logging
       {:lager, ">= 3.5.2", override: true, manager: :rebar3},
       # Code Quality
