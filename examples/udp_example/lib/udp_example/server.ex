@@ -2,6 +2,7 @@ defmodule UdpExample.Server do
   @moduledoc false
 
   use GenServer
+  use Bitwise
 
   require Logger
 
@@ -10,6 +11,8 @@ defmodule UdpExample.Server do
 
     defstruct(socket: nil)
   end
+
+  @inet_af_inet 1
 
   @server_port 8053
 
@@ -44,11 +47,19 @@ defmodule UdpExample.Server do
     }
   ]
 
+  def send!(sock, src_ip, src_port, packet),
+    do: :erlang.port_command(
+          sock,
+          [encode_ip_and_port(src_ip, src_port), packet],
+          []
+        )
+
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def init(_init_args) do
+    _ = Process.flag(:message_queue_data, :off_heap)
     {:ok, %State{}, {:continue, :init}}
   end
 
@@ -73,6 +84,11 @@ defmodule UdpExample.Server do
     {:noreply, state}
   end
 
+  def handle_info({:inet_reply, _, status}, state) do
+    :ok = Logger.debug(fn -> "prim_inet:send() -> #{inspect(status)}" end)
+    {:noreply, state}
+  end
+
   def handle_info(_info, state) do
     {:noreply, state}
   end
@@ -80,9 +96,22 @@ defmodule UdpExample.Server do
   # private functions
 
   defp forward(sock, src_ip, src_port, packet) do
-    fun = &:gen_udp.send/4
+    fun = &__MODULE__.send!/4
     fun_args = [sock, src_ip, src_port]
     :ok = Logger.info(fn -> "received udp packet from #{:inet.ntoa(src_ip)}:#{src_port}" end)
     :ok = Brahman.Dns.Handler.handle(packet, {fun, fun_args})
   end
+
+  defp encode_ip_and_port(ip, port) do
+    [
+      @inet_af_inet,
+      int16(port),
+      ip_to_bytes(ip)
+    ]
+  end
+
+  defp int16(port), do: [(port >>> 8) &&& 0xFF, port &&& 0xFF]
+
+  defp ip_to_bytes({a1, a2, a3, a4}),
+    do: [a1 &&& 0xFF, a2 &&& 0xFF, a3 &&& 0xFF, a4 &&& 0xFF]
 end

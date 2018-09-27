@@ -19,6 +19,7 @@ defmodule Brahman.Dns.Handler do
   end
 
   def init(_args) do
+    _ = Process.flag(:message_queue_data, :off_heap)
     :ok = Logger.info("DNS Handler started")
     {:producer, %{}}
   end
