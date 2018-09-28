@@ -112,7 +112,7 @@ defmodule Brahman.Metrics.Ewma do
   Add a value to the series and updates the moving average.
   """
   # this is a proxy for "uninitialized"
-  @spec add(Simple.t() | Variable.t(), float() | integer()) :: Simple.t() | Variable.t()
+  @spec add(Simple.t() | Variable.t(), float() | integer()) :: Simple.t() | Variable.t() | Peak.t()
   def add(%Simple{value: old_value} = ewma, new_value) when old_value == 0,
     do: %{ewma | value: new_value}
 

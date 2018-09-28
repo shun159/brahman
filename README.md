@@ -69,3 +69,9 @@ Status
 ===
 
 __Under development__
+
+License
+-------
+Tres is released under the __SUSHI-WARE LICENSE__.
+
+__私に寿司をおごってください__
